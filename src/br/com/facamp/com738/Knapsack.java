@@ -11,7 +11,8 @@ public class Knapsack extends Chromosome {
     static int maxWeight;
 
     public Knapsack() {
-        this.fitness = 0;
+        this.fitness = 0.0;
+        this.normFitness = 0.0;
         for (int i = 0; i < items.size(); i++) {
             knapsack.add(items.get(i));
         }
@@ -21,13 +22,15 @@ public class Knapsack extends Chromosome {
     public void generateIndividual() {
         do {
             for (int i = 0; i < items.size(); i++) {
-                if (Math.random() < 0.5) {
+                double r = Math.random();
+                if (r < 0.5) {
                     knapsack.get(i).setInside(false);
                 } else {
                     knapsack.get(i).setInside(true);
                 }
             }
         } while (!isValid());
+        fitness = getFitness();
     }
 
     @Override
@@ -43,6 +46,7 @@ public class Knapsack extends Chromosome {
                     invalid = true;
                 }
             } while (!isValid());
+            fitness = getFitness();
         }
     }
 
@@ -51,39 +55,32 @@ public class Knapsack extends Chromosome {
         Knapsack child1 = new Knapsack();
         Knapsack child2 = new Knapsack();
         Knapsack parent = (Knapsack) other;
-        int pos1 = (int) (knapsack.size() * Math.random());
-        int pos2 = (int) (knapsack.size() * Math.random());
+        List<Knapsack> children = new ArrayList<>();
         do {
-            for (int i = 0; i < knapsack.size(); i++) {
-                if (pos1 < pos2) {
-                    if (i <= pos1) {
-                        child1.knapsack.get(i).setInside(knapsack.get(i).isInside());
-                        child2.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
-                    } else if (i <= pos2) {
-                        child2.knapsack.get(i).setInside(knapsack.get(i).isInside());
-                        child1.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
-                    } else {
-                        child1.knapsack.get(i).setInside(knapsack.get(i).isInside());
-                        child2.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
-                    }
+            int pos1 = (int) (Math.random() * parent.knapsack.size());
+            int pos2 = (int) (Math.random() * parent.knapsack.size());
+            while (pos1 == pos2) {
+                pos2 = (int) (Math.random() * parent.knapsack.size());
+            }
+            if (pos1 > pos2) {
+                int aux = pos1;
+                pos1 = pos2;
+                pos2 = aux;
+            }
+
+            for (int i = 0; i < parent.knapsack.size(); i++) {
+                if (i > pos1 && i < pos2) {
+                    child1.knapsack.get(i).setInside(this.knapsack.get(i).isInside());
+                    child2.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
                 } else {
-                    if (i <= pos2) {
-                        child1.knapsack.get(i).setInside(knapsack.get(i).isInside());
-                        child2.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
-                    } else if (i <= pos1) {
-                        child2.knapsack.get(i).setInside(knapsack.get(i).isInside());
-                        child1.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
-                    } else {
-                        child1.knapsack.get(i).setInside(knapsack.get(i).isInside());
-                        child2.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
-                    }
+                    child2.knapsack.get(i).setInside(this.knapsack.get(i).isInside());
+                    child1.knapsack.get(i).setInside(parent.knapsack.get(i).isInside());
                 }
             }
-        } while (!(child1.isValid() && child2.isValid()));
 
-        List<Knapsack> children = new ArrayList<>();
-        children.add(child1);
-        children.add(child2);
+            children.add(child1);
+            children.add(child2);
+        } while (!(child1.isValid() && child2.isValid()));
         return children;
     }
 
@@ -107,7 +104,10 @@ public class Knapsack extends Chromosome {
 
     @Override
     public double getFitness() {
-        return getKnapsackProfit();
+        if (fitness == 0.0) {
+            return getKnapsackProfit();
+        }
+        return fitness;
     }
 
     @Override
@@ -131,7 +131,7 @@ public class Knapsack extends Chromosome {
         }
         return true;
     }
-
+    
     @Override
     public String toString() {
         String geneString = "|";

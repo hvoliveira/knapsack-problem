@@ -1,6 +1,7 @@
 package br.com.facamp.com738;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Population {
@@ -34,8 +35,9 @@ public class Population {
         }
         for (int i = GA.getElitismOffset(); i < pop.populationSize; i++) {
             // Select parents
-            Knapsack parent1 = tournamentSelection(Knapsack.class);
-            Knapsack parent2 = tournamentSelection(Knapsack.class);
+            double fitness = individuals.get(i).getFitness();
+            Knapsack parent1 = rouletteSelection(Knapsack.class);
+            Knapsack parent2 = rouletteSelection(Knapsack.class);
             // Crossover parents
             List<Knapsack> children = parent1.crossover(parent2);
             // Add child to new population
@@ -61,6 +63,29 @@ public class Population {
         // Get the fittest tour 
         return type.cast(tournament.getFittest());
     }
+    
+        public <T extends Chromosome> T rouletteSelection(Class<T> type) {
+        // normalize fitness
+        double totalFitness = 0.0;
+        for (Chromosome individual : individuals) {
+            totalFitness += individual.getFitness();
+        }
+        for (Chromosome individual : individuals) {
+            individual.normFitness = individual.getFitness() / totalFitness;
+        }
+        // sort individuals
+        Collections.sort(individuals);
+        // select individual
+        double seed = Math.random();
+        double cumFitness = 0.0;
+        cumFitness = individuals.get(0).normFitness;
+        for (int i = 1; i <= populationSize; i++) {
+            if(cumFitness > seed)
+                return type.cast(individuals.get(i-1));
+            cumFitness += individuals.get(i).normFitness;             
+        }
+        return null;
+    }
 
     public Chromosome getFittest() {
         Chromosome fittest = individuals.get(0);
@@ -71,5 +96,5 @@ public class Population {
         }
         return fittest;
     }
-
+    
 }
